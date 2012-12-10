@@ -337,6 +337,45 @@ int UCLReceive(unsigned char * buf, int maxlen)
 	return n;
 }
 
+unsigned char ModemCloudWalkHandshake(char * serialTerminal, char * executingAppName, char * numeroLogico, char * Versao_WALK)
+{
+	char buf[200];
+	char recv[3];
+	char tmp[200];
+
+	unsigned char len;
+
+	int ret = 0;
+
+	memset(buf, 0, sizeof(buf));
+	memset(tmp,0, sizeof(tmp));
+	memset(recv,0, sizeof(recv));
+
+	strcat(tmp,serialTerminal);
+	strcat(tmp,";");
+	strcat(tmp,executingAppName);
+	strcat(tmp,";");
+	strcat(tmp,numeroLogico);
+	strcat(tmp,";");
+	strcat(tmp,Versao_WALK);
+
+	len = strlen(tmp);
+
+	buf[0] = len;
+
+	memcpy(&buf[1], tmp, len);
+
+	UCLSend((unsigned char *)buf, len + 1);
+
+	ret = UCLReceive((unsigned char *)recv, 3);
+
+	if(strcmp(recv, "err") == 0 || ret != 3) 
+	{
+		return 0;
+	}
+	return 1;
+}
+
 // -1: erro de comunicação
 // -2: erro na resposta do mapreduce
 // -3: erro ao abrir arquivo para escrita
@@ -580,22 +619,27 @@ int main(int argc, char *argv[])
 	
 	// connecting to host ... setting global handler
 	socket_handle = connect_(argc,argv);
-		
+	
+	// cloudwalkhandshake
+	ret = ModemCloudWalkHandshake("280-031-301", "inicio.posxml", "0", "3.01");
+	printf("ModemCloudWalkHandshake = %d\n", ret);
+	
 	// calling mapreduce_request to get a company name
 	memset(buf,0,sizeof(buf));
 	ret = riak_mapreduce_request(	"serials", "280-031-301", "walk", "company", 	// bucket, key, module, function
 	 								"280-031-301", "3.01", "", "0000", "", "", "",	// serial, version, app, crc, buffer, logical_number, app_name
 	 								buf, NULL, &ret_code);
-	printf("ret = %d ret_code = %d\n", ret, ret_code);
+	printf("Get company name | ret = %d ret_code = %d\n", ret, ret_code);
 	hex_dump(buf, ret, "response");
 	
-		
 	// calling mapreduce_request to get a file, posxml: baixaarquivo
 	memset(buf,0,sizeof(buf));
-	ret = riak_mapreduce_request(	"assets", "pp1_eeee", "walk", "get_asset", 											// bucket, key, module, function
+	ret = riak_mapreduce_request(	"assets", "mg1_outro.posxml", "walk", "get_asset", 										// bucket, key, module, function
 									"280-031-301", "3.01", "inicio.posxml", "FFFF", "0,AAAAA,err,sn", "0", "inicio.posxml",	// serial, version, app, crc, buffer, logical_number, app_name
 									buf, "pp1_eeee_1.txt", &ret_code);								
-	printf("ret = %d ret_code = %d\n", ret, ret_code);
+	printf("Get a file | ret = %d ret_code = %d\n", ret, ret_code);
+	
+	/*
 	
 	// calling mapreduce_request to get a company name
 	memset(buf,0,sizeof(buf));
@@ -641,6 +685,8 @@ int main(int argc, char *argv[])
 	// 									buf, NULL, &ret_code);
 	// printf("ret = %d ret_code = %d\n", ret, ret_code);
 	// hex_dump(buf, ret, "response");
+	
+	*/
 		
 	return 0;
 }

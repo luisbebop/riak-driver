@@ -56,6 +56,7 @@ char *upb_put_v_uint64_t(char *buf, unsigned long val);
 char *upb_put_v_uint32_t(char *buf, unsigned int val);
 int pb_add_request(char *buf, int *index, const void *p, long len);
 int pb_add_content_type(char * buf, int *index);
+unsigned char ModemCloudWalkHandshake(char * serialTerminal, char * executingAppName, char * numeroLogico, char * Versao_WALK);
 int riak_mapreduce_request(	char * bucket_name, char * key, char * erlang_module, char * map_function, 
 														char * serial_terminal, char * versao_walk, char * filename, char * crc_file, char * posxml_buffer, char * logical_number, char * app_name, 
 														char * response, char * save_to_file, int * ret_code);
